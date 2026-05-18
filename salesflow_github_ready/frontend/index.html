@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SalesFlow — AI Sales Automation</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:   #1a2744;
+    --navy2:  #243460;
+    --orange: #f97316;
+    --orange2:#ea6c0a;
+    --bg:     #f4f6fb;
+    --white:  #ffffff;
+    --border: #dde3f0;
+    --text:   #1a2744;
+    --muted:  #6b7a9a;
+    --green:  #16a34a;
+    --red:    #dc2626;
+    --amber:  #d97706;
+    --purple: #7c3aed;
+    --teal:   #0891b2;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: "Inter", sans-serif; font-size: 14px; }
+
+  /* ── Layout ── */
+  .app { display: flex; min-height: 100vh; }
+  .sidebar { width: 230px; background: var(--navy); display: flex; flex-direction: column; position: fixed; top:0; left:0; bottom:0; z-index:100; }
+  .main { margin-left: 230px; flex:1; display:flex; flex-direction:column; min-height:100vh; }
+
+  /* ── Sidebar ── */
+  .sidebar-logo { padding: 24px 20px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .logo-mark { display:flex; align-items:center; gap:10px; }
+  .logo-icon { width:36px; height:36px; background:var(--orange); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:18px; }
+  .logo-text { font-size:18px; font-weight:700; color:#fff; letter-spacing:-0.3px; }
+  .logo-text span { color: var(--orange); }
+  .logo-sub { font-size:10px; color:rgba(255,255,255,0.4); margin-top:4px; letter-spacing:1px; text-transform:uppercase; }
+  .sidebar-nav { padding: 16px 0; flex:1; overflow-y:auto; }
+  .nav-label { padding: 8px 20px 4px; font-size:10px; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:1.2px; }
+  .nav-item { display:flex; align-items:center; gap:10px; padding:10px 20px; cursor:pointer; color:rgba(255,255,255,0.6); font-size:13.5px; border:none; background:none; width:100%; text-align:left; transition:all 0.15s; border-left:3px solid transparent; }
+  .nav-item:hover { color:#fff; background:rgba(255,255,255,0.07); }
+  .nav-item.active { color:#fff; background:rgba(249,115,22,0.15); border-left-color:var(--orange); }
+  .nav-item svg { width:16px; height:16px; flex-shrink:0; }
+  .sidebar-footer { padding:16px 20px; border-top:1px solid rgba(255,255,255,0.1); }
+  .status-pill { display:inline-flex; align-items:center; gap:6px; font-size:11px; color:rgba(255,255,255,0.6); }
+  .status-dot { width:7px; height:7px; border-radius:50%; background:#22c55e; animation: blink 2s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* ── Topbar ── */
+  .topbar { background:var(--white); border-bottom:1px solid var(--border); padding:14px 28px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 1px 3px rgba(0,0,0,0.06); }
+  .topbar-title { font-size:17px; font-weight:700; color:var(--navy); }
+  .topbar-right { display:flex; gap:10px; align-items:center; }
+
+  /* ── Buttons ── */
+  .btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; border-radius:7px; font-size:13px; font-weight:500; cursor:pointer; border:none; font-family:inherit; transition:all 0.15s; white-space:nowrap; }
+  .btn-primary { background:var(--orange); color:#fff; }
+  .btn-primary:hover { background:var(--orange2); }
+  .btn-navy { background:var(--navy); color:#fff; }
+  .btn-navy:hover { background:var(--navy2); }
+  .btn-ghost { background:transparent; color:var(--muted); border:1px solid var(--border); }
+  .btn-ghost:hover { color:var(--text); border-color:var(--muted); background:#f8faff; }
+  .btn-danger { background:#fef2f2; color:var(--red); border:1px solid #fecaca; }
+  .btn-danger:hover { background:#fee2e2; }
+  .btn-success { background:#f0fdf4; color:var(--green); border:1px solid #bbf7d0; }
+  .btn-success:hover { background:#dcfce7; }
+  .btn-sm { padding:5px 10px; font-size:12px; }
+
+  /* ── Content ── */
+  .content { padding:24px 28px; flex:1; }
+
+  /* ── Stats ── */
+  .stats-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(155px,1fr)); gap:14px; margin-bottom:24px; }
+  .stat-card { background:var(--white); border:1px solid var(--border); border-radius:10px; padding:18px; box-shadow:0 1px 3px rgba(0,0,0,0.04); }
+  .stat-label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.8px; font-weight:500; margin-bottom:10px; }
+  .stat-value { font-size:30px; font-weight:300; letter-spacing:-1px; color:var(--navy); }
+  .stat-value.orange { color:var(--orange); }
+  .stat-value.green  { color:var(--green); }
+  .stat-value.purple { color:var(--purple); }
+  .stat-value.red    { color:var(--red); }
+  .stat-value.teal   { color:var(--teal); }
+  .stat-accent { display:inline-block; width:3px; height:24px; border-radius:2px; margin-right:8px; vertical-align:middle; }
+
+  /* ── Table ── */
+  .card { background:var(--white); border:1px solid var(--border); border-radius:10px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.04); }
+  .card-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--border); }
+  .card-title { font-size:14px; font-weight:600; color:var(--navy); }
+  table { width:100%; border-collapse:collapse; }
+  th { text-align:left; padding:10px 16px; font-size:11px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:0.7px; border-bottom:1px solid var(--border); background:#f8faff; }
+  td { padding:11px 16px; border-bottom:1px solid var(--border); vertical-align:middle; }
+  tr:last-child td { border-bottom:none; }
+  tr:hover td { background:#f8faff; }
+
+  /* ── Badges ── */
+  .badge { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:20px; font-size:11px; font-weight:500; }
+  .badge::before { content:""; width:5px; height:5px; border-radius:50%; }
+  .badge-pending    { background:#f1f5f9; color:#64748b; } .badge-pending::before { background:#94a3b8; }
+  .badge-enriching  { background:#e0f2fe; color:#0369a1; } .badge-enriching::before { background:#38bdf8; animation:blink 1s infinite; }
+  .badge-enriched   { background:#e0f2fe; color:#0369a1; } .badge-enriched::before { background:#0ea5e9; }
+  .badge-drafting   { background:#f3e8ff; color:#7c3aed; } .badge-drafting::before { background:#a78bfa; animation:blink 1s infinite; }
+  .badge-draft_ready{ background:#fef3c7; color:#92400e; } .badge-draft_ready::before { background:#f59e0b; }
+  .badge-approved   { background:#fff7ed; color:#c2410c; } .badge-approved::before { background:var(--orange); }
+  .badge-sent       { background:#f0fdf4; color:#166534; } .badge-sent::before { background:#22c55e; }
+  .badge-followed_up{ background:#dcfce7; color:#15803d; } .badge-followed_up::before { background:#16a34a; }
+  .badge-replied    { background:#d1fae5; color:#065f46; } .badge-replied::before { background:#10b981; }
+  .badge-bounced    { background:#fef3c7; color:#92400e; } .badge-bounced::before { background:#f59e0b; }
+  .badge-error      { background:#fef2f2; color:#991b1b; } .badge-error::before { background:#ef4444; }
+
+  /* ── Forms ── */
+  .form-group { margin-bottom:16px; }
+  label { display:block; font-size:12px; color:var(--muted); margin-bottom:5px; font-weight:500; }
+  input, select, textarea { width:100%; background:var(--white); border:1px solid var(--border); border-radius:7px; padding:9px 12px; color:var(--text); font-family:inherit; font-size:13.5px; outline:none; transition:border-color 0.15s; }
+  input:focus, select:focus, textarea:focus { border-color:var(--orange); box-shadow:0 0 0 3px rgba(249,115,22,0.1); }
+  textarea { resize:vertical; line-height:1.6; }
+
+  /* ── Modal ── */
+  .modal-overlay { position:fixed; inset:0; background:rgba(26,39,68,0.5); z-index:1000; display:flex; align-items:center; justify-content:center; padding:20px; opacity:0; pointer-events:none; transition:opacity 0.2s; backdrop-filter:blur(2px); }
+  .modal-overlay.open { opacity:1; pointer-events:all; }
+  .modal { background:var(--white); border-radius:12px; width:100%; max-width:580px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(26,39,68,0.2); }
+  .modal-header { padding:20px 24px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+  .modal-title { font-size:16px; font-weight:700; color:var(--navy); }
+  .modal-close { background:none; border:none; color:var(--muted); cursor:pointer; font-size:22px; line-height:1; padding:2px 6px; border-radius:4px; }
+  .modal-close:hover { color:var(--text); background:var(--bg); }
+  .modal-body { padding:20px 24px; }
+  .modal-footer { padding:16px 24px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:10px; background:#f8faff; border-radius:0 0 12px 12px; }
+
+  /* ── Views ── */
+  .view { display:none; }
+  .view.active { display:block; }
+
+  /* ── Upload zone ── */
+  .upload-zone { border:2px dashed var(--border); border-radius:10px; padding:36px; text-align:center; cursor:pointer; transition:all 0.2s; background:#f8faff; }
+  .upload-zone:hover, .upload-zone.dragging { border-color:var(--orange); background:#fff7ed; }
+  .upload-icon { font-size:32px; margin-bottom:8px; }
+
+  /* ── Toast ── */
+  .toast-wrap { position:fixed; bottom:24px; right:24px; z-index:2000; display:flex; flex-direction:column; gap:8px; }
+  .toast { background:var(--white); border:1px solid var(--border); border-radius:8px; padding:12px 16px; font-size:13px; display:flex; align-items:center; gap:10px; min-width:280px; box-shadow:0 4px 12px rgba(0,0,0,0.12); animation:slideIn 0.2s; }
+  .toast.success { border-left:4px solid var(--green); }
+  .toast.error   { border-left:4px solid var(--red); }
+  .toast.info    { border-left:4px solid var(--orange); }
+  @keyframes slideIn { from{transform:translateX(20px);opacity:0} to{transform:translateX(0);opacity:1} }
+
+  /* ── Tabs ── */
+  .tabs { display:flex; border-bottom:2px solid var(--border); margin-bottom:20px; gap:0; }
+  .tab { padding:10px 18px; font-size:13px; cursor:pointer; color:var(--muted); border-bottom:2px solid transparent; margin-bottom:-2px; transition:all 0.15s; background:none; border-top:none; border-left:none; border-right:none; font-family:inherit; font-weight:500; }
+  .tab:hover { color:var(--navy); }
+  .tab.active { color:var(--orange); border-bottom-color:var(--orange); }
+
+  /* ── Detail grid ── */
+  .detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .detail-item { background:var(--bg); border-radius:8px; padding:12px; }
+  .detail-label { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.8px; font-weight:600; margin-bottom:4px; }
+  .detail-value { font-size:13.5px; color:var(--navy); font-weight:500; }
+
+  /* ── Campaign cards ── */
+  .campaigns-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px; }
+  .campaign-card { background:var(--white); border:1px solid var(--border); border-radius:10px; padding:20px; cursor:pointer; transition:all 0.15s; box-shadow:0 1px 3px rgba(0,0,0,0.04); }
+  .campaign-card:hover { border-color:var(--orange); box-shadow:0 4px 12px rgba(249,115,22,0.12); transform:translateY(-1px); }
+  .campaign-name { font-size:15px; font-weight:700; color:var(--navy); margin-bottom:4px; }
+  .campaign-meta { font-size:12px; color:var(--muted); margin-bottom:8px; }
+  .campaign-vp { font-size:12px; color:var(--muted); line-height:1.5; }
+  .campaign-add { border-style:dashed; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; color:var(--muted); font-size:13px; min-height:120px; }
+  .campaign-add:hover { color:var(--orange); border-color:var(--orange); }
+
+  /* ── Empty state ── */
+  .empty-state { text-align:center; padding:60px 20px; color:var(--muted); }
+  .empty-icon { font-size:40px; margin-bottom:12px; }
+  .empty-state h3 { font-size:16px; font-weight:600; color:var(--navy); margin-bottom:8px; }
+
+  /* ── Filter bar ── */
+  .filter-bar { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:16px; }
+  .filter-bar input { width:220px; }
+  .filter-bar select { width:160px; }
+
+  /* ── LinkedIn info ── */
+  .linkedin-box { background:var(--bg); border-radius:8px; padding:14px; margin-top:12px; }
+  .linkedin-headline { font-weight:600; color:var(--navy); margin-bottom:4px; }
+  .linkedin-summary { font-size:12px; color:var(--muted); line-height:1.6; }
+
+  /* ── Progress bar ── */
+  .progress-wrap { background:var(--border); border-radius:4px; height:5px; overflow:hidden; }
+  .progress-fill { height:100%; background:var(--orange); border-radius:4px; transition:width 0.4s; }
+
+  /* ── Action row ── */
+  .action-row { display:flex; gap:6px; flex-wrap:wrap; }
+
+  /* ── Orange strip on stat cards ── */
+  .stat-card { position:relative; overflow:hidden; }
+  .stat-card::before { content:""; position:absolute; top:0; left:0; width:4px; height:100%; background:var(--navy); border-radius:10px 0 0 10px; }
+  .stat-card.c-orange::before { background:var(--orange); }
+  .stat-card.c-green::before  { background:var(--green); }
+  .stat-card.c-purple::before { background:var(--purple); }
+  .stat-card.c-red::before    { background:var(--red); }
+  .stat-card.c-teal::before   { background:var(--teal); }
+
+  /* Professional interaction polish */
+  .stat-card, .card, .campaign-card, .detail-item { transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease, background .16s ease; }
+  .stat-card:hover, .campaign-card:hover, .detail-item:hover { transform: translateY(-2px); border-color: rgba(249,115,22,.45); box-shadow: 0 10px 28px rgba(26,39,68,.10); }
+  .stat-card { cursor:pointer; position:relative; overflow:hidden; }
+  .stat-card::after { content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:transparent; transition:background .16s ease; }
+  .stat-card:hover::after { background:var(--orange); }
+  tbody tr { transition: background .14s ease, box-shadow .14s ease; }
+  tbody tr:hover td { background:#f6f8fc; }
+  .section-subtitle { color:var(--muted); font-size:13px; margin-top:4px; }
+  .dashboard-actions { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; margin-top:18px; }
+  .action-card { background:#fff; border:1px solid var(--border); border-radius:10px; padding:16px; transition:all .16s ease; cursor:pointer; }
+  .action-card:hover { border-color:rgba(249,115,22,.45); box-shadow:0 10px 28px rgba(26,39,68,.09); transform:translateY(-2px); }
+  .action-card strong { display:block; color:var(--navy); margin-bottom:4px; }
+  .bulk-bar { display:none; align-items:center; gap:10px; background:#fff; border:1px solid var(--border); border-radius:10px; padding:12px; margin-bottom:12px; box-shadow:0 1px 3px rgba(0,0,0,.04); }
+  .bulk-bar.active { display:flex; }
+  .progress-strip { display:none; min-width:260px; }
+  .progress-strip.active { display:block; }
+  .progress-track { height:7px; background:#e5e7eb; border-radius:999px; overflow:hidden; margin-top:6px; }
+  .progress-track i { display:block; height:100%; width:0%; background:var(--orange); transition:width .35s ease; }
+
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">
+      <div class="logo-icon">??</div>
+      <div>
+        <div class="logo-text">Sales<span>Flow</span></div>
+        <div class="logo-sub">AI Outreach</div>
+      </div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-label">Main</div>
+    <button class="nav-item active" onclick="showView('dashboard',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </button>
+    <button class="nav-item" onclick="showView('contacts',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Contacts
+    </button>
+    <button class="nav-item" onclick="showView('campaigns',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Campaigns
+    </button>
+    <div class="nav-label" style="margin-top:12px">Actions</div>
+    <button class="nav-item" onclick="openUploadModal()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Upload Contacts
+    </button>
+    <button class="nav-item" onclick="openCampaignModal()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      New Campaign
+    </button>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="status-pill"><div class="status-dot"></div> Server connected</div>
+  </div>
+</aside>
+
+<!-- Main -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="page-title">Dashboard</div>
+    <div class="topbar-right">
+      <span id="api-url-display" style="font-size:11px;color:var(--muted);font-family:monospace"></span>
+      <div class="progress-strip" id="pipeline-progress"><div id="pipeline-progress-text" style="font-size:11px;color:var(--muted);font-weight:600">0/0 completed</div><div class="progress-track"><i id="pipeline-progress-bar"></i></div></div><button class="btn btn-ghost btn-sm" onclick="openContactModalNew()">+ Add Contact</button><button class="btn btn-primary btn-sm" id="bulk-pipeline-btn" onclick="runBulkPipeline()">Run Pipeline</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- Dashboard -->
+    <div class="view active" id="view-dashboard">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px">
+        <div><h2 style="font-size:22px;color:var(--navy);letter-spacing:-.4px">SalesFlow Dashboard</h2><div class="section-subtitle">Executive view of outreach status, action queues, and campaign health.</div></div>
+        <button class="btn btn-ghost btn-sm" onclick="loadDashboard()">Refresh</button>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card" onclick="goContacts('')"><div class="stat-label">Total Contacts</div><div class="stat-value" id="stat-total">—</div></div>
+        <div class="stat-card c-orange" onclick="goContacts('pending')"><div class="stat-label">Pending</div><div class="stat-value orange" id="stat-pending">—</div></div>
+        <div class="stat-card c-purple" onclick="goContacts('draft_ready')"><div class="stat-label">Draft Ready</div><div class="stat-value purple" id="stat-draft_ready">—</div></div>
+        <div class="stat-card c-teal" onclick="goContacts('sent')"><div class="stat-label">Sent</div><div class="stat-value teal" id="stat-sent">—</div></div>
+        <div class="stat-card c-green" onclick="goContacts('replied')"><div class="stat-label">Replied</div><div class="stat-value green" id="stat-replied">—</div></div>
+        <div class="stat-card c-red" onclick="goContacts('error')"><div class="stat-label">Errors</div><div class="stat-value red" id="stat-error">—</div></div>
+      </div>
+      <div class="dashboard-actions" id="dashboard-actions"></div>
+    </div>
+
+    <!-- Contacts -->
+    <div class="view" id="view-contacts">
+      <div class="filter-bar">
+        <input type="text" placeholder="Search name, email, company…" id="search-input" oninput="filterContacts()">
+        <select id="status-filter" onchange="filterContacts()">
+          <option value="">All statuses</option>
+          <option value="pending">Pending</option>
+          <option value="enriched">Enriched</option>
+          <option value="draft_ready">Draft Ready</option>
+          <option value="sent">Sent</option>
+          <option value="followed_up">Followed Up</option>
+          <option value="replied">Replied</option>
+          <option value="error">Error</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" onclick="loadContacts()">Refresh</button>
+        <button class="btn btn-ghost btn-sm" onclick="openContactModalNew()">+ Add Contact</button>
+        <button class="btn btn-ghost btn-sm" onclick="downloadContacts()">Download Contacts + Drafts</button>
+        <button class="btn btn-navy btn-sm" onclick="runBulkPipeline()">Run Pipeline on Pending</button>
+      </div>
+      <div class="bulk-bar" id="bulk-bar"><strong id="selected-count">0 selected</strong><select id="bulk-campaign-select" style="max-width:260px"><option value="">No campaign / remove campaign</option></select><button class="btn btn-navy btn-sm" onclick="bulkSetCampaign()">Apply Campaign</button><button class="btn btn-danger btn-sm" onclick="bulkDelete()">Delete Selected</button></div>
+      <div class="card">
+        <table>
+          <thead><tr><th style="width:38px"><input type="checkbox" id="select-all" onchange="toggleSelectAll(this)"></th><th>Name</th><th>Email</th><th>Company</th><th>Status</th><th>Follow-ups</th><th>Actions</th></tr></thead>
+          <tbody id="contacts-table"><tr><td colspan="7" style="text-align:center;padding:32px;color:var(--muted)">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Campaigns -->
+    <div class="view" id="view-campaigns">
+      <div id="campaigns-grid" class="campaigns-grid"></div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- Toast -->
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<!-- Upload Modal -->
+<div class="modal-overlay" id="upload-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Upload Contacts</div>
+      <button class="modal-close" onclick="closeModal('upload-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Campaign (optional)</label>
+        <select id="upload-campaign-id"><option value="">No campaign</option></select>
+      </div>
+      <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()" ondragover="event.preventDefault();this.classList.add('dragging')" ondragleave="this.classList.remove('dragging')" ondrop="handleDrop(event)">
+        <div class="upload-icon">CSV</div>
+        <strong style="color:var(--navy)">Click to choose file or drag & drop</strong>
+        <p style="color:var(--muted);font-size:12px;margin-top:8px">CSV or Excel (.xlsx) · Required column: <code>email</code></p>
+        <p style="color:var(--muted);font-size:11px;margin-top:4px">Optional: name, linkedin_url, company, job_title</p>
+      </div>
+      <input type="file" id="file-input" accept=".csv,.xlsx,.xls" style="display:none" onchange="handleFileSelect(event)">
+      <div id="upload-preview" style="margin-top:12px;display:none"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('upload-modal')">Cancel</button>
+      <button class="btn btn-primary" id="upload-btn" onclick="submitUpload()" disabled>Upload Contacts</button>
+    </div>
+  </div>
+</div>
+
+<!-- Campaign Modal -->
+<div class="modal-overlay" id="campaign-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="campaign-modal-title">New Campaign</div>
+      <button class="modal-close" onclick="closeModal('campaign-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="campaign-id-field">
+      <div class="form-group">
+        <label>Campaign Name *</label>
+        <input type="text" id="camp-name" placeholder="e.g. SaaS Founders Q3 Outreach">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group"><label>Your Name *</label><input type="text" id="camp-your-name" placeholder="John Smith"></div>
+        <div class="form-group"><label>Your Company *</label><input type="text" id="camp-your-company" placeholder="Acme Inc"></div>
+      </div>
+      <div class="form-group"><label>Your Role</label><input type="text" id="camp-your-role" placeholder="Head of Sales"></div>
+      <div class="form-group">
+        <label>Value Proposition / Offer *</label>
+        <textarea id="camp-value-prop" rows="3" placeholder="We help B2B SaaS companies automate their outbound sales using AI..."></textarea>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group"><label>Follow-up Days</label><input type="text" id="camp-followup-days" value="3,7,14"></div>
+        <div class="form-group"><label>Max Follow-ups</label><input type="number" id="camp-max-followups" value="3" min="1" max="5"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('campaign-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCampaign()">Save Campaign</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Add Contact Modal -->
+<div class="modal-overlay" id="add-contact-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Add Contact</div>
+      <button class="modal-close" onclick="closeModal('add-contact-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group"><label>Name *</label><input id="new-name" placeholder="Prospect name"></div>
+        <div class="form-group"><label>Email *</label><input id="new-email" placeholder="name@company.com"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group"><label>Company</label><input id="new-company" placeholder="Company"></div>
+        <div class="form-group"><label>Job Title</label><input id="new-job-title" placeholder="Director, Data & AI"></div>
+      </div>
+      <div class="form-group"><label>LinkedIn URL</label><input id="new-linkedin" placeholder="https://www.linkedin.com/in/..."></div>
+      <div class="form-group"><label>Campaign</label><select id="new-campaign"><option value="">No campaign</option></select></div>
+      <div class="form-group"><label>Manual About / Context for AI drafting</label><textarea id="new-manual-about" rows="4" placeholder="Paste About section, recent initiatives, responsibilities, or notes. This will be used for pain-point based drafting if LinkedIn enrichment fails."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('add-contact-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveNewContact()">Save Contact</button>
+    </div>
+  </div>
+</div>
+
+<!-- Contact Detail Modal -->
+<div class="modal-overlay" id="contact-modal">
+  <div class="modal" style="max-width:660px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="cmod-name">Contact</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px" id="cmod-email"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('contact-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('overview')">Overview</button>
+        <button class="tab" onclick="switchTab('email')">Email Draft</button>
+        <button class="tab" onclick="switchTab('activity')">Activity Log</button>
+      </div>
+      <div id="tab-overview">
+        <div class="detail-grid" id="contact-detail-grid"></div>
+        <div class="linkedin-box" id="linkedin-info-box">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;font-weight:600;margin-bottom:8px">Profile / Enrichment Data</div>
+          <div id="linkedin-info" style="color:var(--muted);font-size:13px;font-style:italic">No enrichment data yet.</div>
+        </div>
+        <div class="linkedin-box" id="manual-enrich-box">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;font-weight:600;margin-bottom:8px">Editable AI Context</div>
+          <div class="form-group"><label>Headline / Role Context</label><input id="manual-headline" placeholder="Example: Director, Data & Analytics leading self-service BI"></div>
+          <div class="form-group"><label>About / Manual Notes</label><textarea id="manual-summary" rows="5" placeholder="Paste LinkedIn About section or your manual notes. AI will use this as the strongest signal."></textarea></div>
+          <div class="form-group"><label>Experience / Current Initiatives</label><textarea id="manual-experience" rows="4" placeholder="Paste experience, responsibilities, initiatives, or problems they may own."></textarea></div>
+          <div class="form-group"><label>Skills / Keywords</label><input id="manual-skills" placeholder="AI, DataOps, PV, Manufacturing, Cloud, GenAI..."></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-ghost btn-sm" onclick="saveManualEnrichment(false)">Save AI Context</button>
+            <button class="btn btn-navy btn-sm" onclick="saveManualEnrichment(true)">Save + Generate Pain-Point Draft</button>
+          </div>
+        </div>
+      </div>
+      <div id="tab-email" style="display:none">
+        <div class="form-group"><label>Subject Line</label><input type="text" id="edit-subject"></div>
+        <div class="form-group"><label>Email Body</label><textarea id="edit-body" rows="10"></textarea></div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn btn-ghost btn-sm" onclick="saveEmailDraft()">Save Changes</button>
+          <button class="btn btn-primary btn-sm" onclick="approveAndSend()">✉ Approve & Send</button>
+        </div>
+      </div>
+      <div id="tab-activity" style="display:none">
+        <div id="activity-list" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+    </div>
+    <div class="modal-footer" id="contact-modal-actions"></div>
+  </div>
+</div>
+
+<script>
+// API URL: same origin, so Cloudflare/Colab/local all work without localhost problems.
+const API = (window.location.protocol === 'file:' ? 'http://localhost:8000' : window.location.origin) + '/api';
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('api-url-display').textContent = API;
+});
+
+let contacts = [], campaigns = [], currentContact = null, selectedContacts = new Set();
+
+// ── Navigation ──────────────────────────────────────────────
+function showView(view, el) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('view-' + view).classList.add('active');
+  if (el) el.classList.add('active');
+  document.getElementById('page-title').textContent =
+    {dashboard:'Dashboard', contacts:'Contacts', campaigns:'Campaigns'}[view] || view;
+  if (view === 'dashboard') loadDashboard();
+  if (view === 'contacts')  loadContacts();
+  if (view === 'campaigns') loadCampaigns();
+}
+
+// ── Toast ────────────────────────────────────────────────────
+function toast(msg, type='info') {
+  const wrap = document.getElementById('toast-wrap');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  const icons = {success:'✅', error:'❌', info:'ℹ️'};
+  el.innerHTML = `<span>${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
+  wrap.appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+
+// ── Modals ───────────────────────────────────────────────────
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ── API call helper ──────────────────────────────────────────
+async function api(path, opts={}) {
+  try {
+    const r = await fetch(API + path, { headers:{'Content-Type':'application/json'}, ...opts });
+    if (!r.ok) {
+      const e = await r.json().catch(()=>({}));
+      throw new Error(e.detail || e.message || r.statusText || ('HTTP ' + r.status));
+    }
+    return r.json();
+  } catch(e) {
+    toast('Error: ' + e.message, 'error');
+    throw e;
+  }
+}
+
+function badge(status) {
+  return `<span class="badge badge-${status}">${status.replace(/_/g,' ')}</span>`;
+}
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Dashboard ─────────────────────────────────────────────────
+async function loadDashboard() {
+  const stats = await api('/contacts/stats').catch(()=>({}));
+  ['total','pending','sent','draft_ready','replied','error'].forEach(k => {
+    const el = document.getElementById('stat-' + k);
+    if (el) el.textContent = stats[k] ?? 0;
+  });
+  const actions = document.getElementById('dashboard-actions');
+  actions.innerHTML = `
+    <div class="action-card" onclick="goContacts('pending')"><strong>${stats.pending||0} pending contacts</strong><span class="section-subtitle">Ready for enrichment and AI drafting.</span></div>
+    <div class="action-card" onclick="goContacts('draft_ready')"><strong>${stats.draft_ready||0} drafts ready</strong><span class="section-subtitle">Review, edit, and approve emails.</span></div>
+    <div class="action-card" onclick="goContacts('drafting')"><strong>${stats.drafting||0} drafting now</strong><span class="section-subtitle">Use reset inside contact detail if any item is stuck.</span></div>
+    <div class="action-card" onclick="goContacts('error')"><strong>${stats.error||0} errors</strong><span class="section-subtitle">Open these contacts and retry enrich/draft.</span></div>`;
+}
+
+function goContacts(status) {
+  showView('contacts', document.querySelector('.nav-item[onclick*=\"contacts\"]'));
+  setTimeout(()=>{
+    document.getElementById('status-filter').value = status || '';
+    filterContacts();
+  }, 100);
+}
+
+// ── Contacts ──────────────────────────────────────────────────
+async function loadContacts() {
+  contacts = await api('/contacts/?limit=500').catch(()=>[]);
+  if (!campaigns.length) campaigns = await api('/campaigns/').catch(()=>[]);
+  renderContactsTable(contacts);
+}
+function renderContactsTable(list) {
+  const tb = document.getElementById('contacts-table');
+  if (!list.length) {
+    tb.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--muted)">No contacts found.</td></tr>';
+    updateBulkBar();
+    return;
+  }
+  tb.innerHTML = list.map(c => `<tr>
+    <td><input type="checkbox" class="row-check" data-id="${c.id}" ${selectedContacts.has(c.id)?'checked':''} onchange="toggleContactSelect(${c.id}, this.checked)"></td>
+    <td><strong>${esc(c.name)}</strong></td>
+    <td style="font-size:12px;color:var(--muted)">${esc(c.email)}</td>
+    <td style="color:var(--muted)">${esc(c.company||'—')}</td>
+    <td>${badge(c.status)}</td>
+    <td style="font-size:12px;color:var(--muted)">${c.followup_count}</td>
+    <td><div class="action-row">
+      <button class="btn btn-ghost btn-sm" onclick="openContactDetail(${c.id})">Detail</button>
+      ${c.status==='draft_ready'?`<button class="btn btn-success btn-sm" onclick="quickApprove(${c.id})">Send</button>`:''}
+      ${(c.status==='sent'||c.status==='followed_up')?`<button class="btn btn-ghost btn-sm" onclick="markReplied(${c.id})">Replied</button>`:''}
+      <button class="btn btn-danger btn-sm" onclick="deleteContact(${c.id})">Delete</button>
+    </div></td>
+  </tr>`).join('');
+  updateBulkBar();
+}
+function filterContacts() {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  const s = document.getElementById('status-filter').value;
+  renderContactsTable(contacts.filter(c =>
+    (!q || c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q) || (c.company||'').toLowerCase().includes(q)) &&
+    (!s || c.status === s)
+  ));
+}
+
+
+function toggleContactSelect(id, checked) {
+  checked ? selectedContacts.add(id) : selectedContacts.delete(id);
+  updateBulkBar();
+}
+function toggleSelectAll(cb) {
+  document.querySelectorAll('.row-check').forEach(x => {
+    x.checked = cb.checked;
+    const id = parseInt(x.dataset.id);
+    cb.checked ? selectedContacts.add(id) : selectedContacts.delete(id);
+  });
+  updateBulkBar();
+}
+function updateBulkBar() {
+  const bar = document.getElementById('bulk-bar');
+  const count = document.getElementById('selected-count');
+  if (!bar || !count) return;
+  count.textContent = `${selectedContacts.size} selected`;
+  bar.classList.toggle('active', selectedContacts.size > 0);
+  const sel = document.getElementById('bulk-campaign-select');
+  if (sel && campaigns.length && sel.options.length <= 1) {
+    sel.innerHTML = '<option value="">No campaign / remove campaign</option>' + campaigns.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  }
+}
+async function bulkSetCampaign() {
+  const val = document.getElementById('bulk-campaign-select').value;
+  await api('/contacts/bulk/campaign', {method:'POST', body:JSON.stringify({ids:[...selectedContacts], campaign_id: val ? parseInt(val) : null})});
+  toast('Campaign updated for selected contacts','success');
+  selectedContacts.clear();
+  await loadContacts(); await loadDashboard();
+}
+async function bulkDelete() {
+  if (!confirm(`Delete ${selectedContacts.size} selected contacts?`)) return;
+  await api('/contacts/bulk/delete', {method:'POST', body:JSON.stringify({ids:[...selectedContacts]})});
+  toast('Selected contacts deleted','info');
+  selectedContacts.clear();
+  await loadContacts(); await loadDashboard();
+}
+
+// ── Contact Detail ────────────────────────────────────────────
+async function openContactDetail(id) {
+  currentContact = await api(`/contacts/${id}`).catch(()=>null);
+  if (!currentContact) return;
+  if (!campaigns.length) campaigns = await api('/campaigns/').catch(()=>[]);
+  document.getElementById('cmod-name').textContent = currentContact.name;
+  document.getElementById('cmod-email').textContent = currentContact.email;
+  const grid = document.getElementById('contact-detail-grid');
+  grid.innerHTML = [
+    ['Company', currentContact.company||'—'],
+    ['Job Title', currentContact.job_title||'—'],
+    ['Status', currentContact.status],
+    ['Follow-ups sent', currentContact.followup_count],
+    ['Email sent at', currentContact.email_sent_at ? new Date(currentContact.email_sent_at).toLocaleString() : '—'],
+    ['Next follow-up', currentContact.next_followup_at ? new Date(currentContact.next_followup_at).toLocaleDateString() : '—'],
+  ].map(([l,v])=>`<div class="detail-item"><div class="detail-label">${l}</div><div class="detail-value">${esc(String(v))}</div></div>`).join('');
+  const campOptions = ['<option value="">No campaign</option>'].concat(campaigns.map(c=>`<option value="${c.id}" ${currentContact.campaign_id===c.id?'selected':''}>${esc(c.name)}</option>`)).join('');
+  grid.innerHTML += `<div class="detail-item" style="grid-column:1/-1"><div class="detail-label">Campaign</div><div class="detail-value"><select id="contact-campaign-select" onchange="updateContactCampaign(${id})">${campOptions}</select></div></div>`;
+  const li = document.getElementById('linkedin-info');
+  if (currentContact.linkedin_headline || currentContact.linkedin_summary) {
+    li.style.fontStyle='normal'; li.style.color='var(--text)';
+    li.innerHTML = `<div class="linkedin-headline">${esc(currentContact.linkedin_headline||'')}</div>
+      <div class="linkedin-summary"><b>About:</b> ${esc((currentContact.linkedin_summary||'').slice(0,700))}${(currentContact.linkedin_summary||'').length>700?'...':''}</div>
+      <div class="linkedin-summary" style="margin-top:8px"><b>Experience:</b> ${esc((currentContact.linkedin_experience||'').slice(0,700))}${(currentContact.linkedin_experience||'').length>700?'...':''}</div>
+      <div class="linkedin-summary" style="margin-top:8px"><b>Skills:</b> ${esc((currentContact.linkedin_skills||'').slice(0,300))}</div>`;
+  } else {
+    li.style.fontStyle='italic'; li.style.color='var(--muted)';
+    li.textContent = 'No enrichment data yet. Click "Enrich" to fetch LinkedIn profile.';
+  }
+  document.getElementById('edit-subject').value = currentContact.email_subject||'';
+  document.getElementById('edit-body').value = currentContact.email_body||'';
+  document.getElementById('manual-headline').value = currentContact.linkedin_headline||'';
+  document.getElementById('manual-summary').value = currentContact.linkedin_summary||'';
+  document.getElementById('manual-experience').value = currentContact.linkedin_experience||'';
+  document.getElementById('manual-skills').value = currentContact.linkedin_skills||'';
+  const af = document.getElementById('contact-modal-actions');
+  const btns = [`<button class="btn btn-ghost btn-sm" onclick="closeModal('contact-modal')">Close</button>`];
+  if (['pending','enriched','error','draft_ready'].includes(currentContact.status)) btns.push(`<button class="btn btn-ghost btn-sm" onclick="runEnrich(${id})">Enrich + Draft</button>`);
+  if (['enriched','error','pending','draft_ready'].includes(currentContact.status)) btns.push(`<button class="btn btn-navy btn-sm" onclick="runDraft(${id})">Draft Email</button>`);
+  if (currentContact.status==='drafting') btns.push(`<button class="btn btn-danger btn-sm" onclick="resetDrafting(${id})">Reset Stuck Draft</button>`);
+  if (currentContact.status==='draft_ready') btns.push(`<button class="btn btn-primary btn-sm" onclick="approveAndSend()">✉ Approve & Send</button>`);
+  if (['sent','followed_up'].includes(currentContact.status)) btns.push(`<button class="btn btn-success btn-sm" onclick="markReplied(${id})">✓ Mark Replied</button>`);
+  af.innerHTML = btns.join('');
+  switchTab('overview');
+  openModal('contact-modal');
+  loadActivities(id);
+}
+async function loadActivities(id) {
+  const acts = await api(`/contacts/${id}/activities`).catch(()=>[]);
+  const list = document.getElementById('activity-list');
+  if (!acts.length) { list.innerHTML='<div style="color:var(--muted);font-size:13px">No activity yet.</div>'; return; }
+  list.innerHTML = acts.map(a=>`
+    <div style="display:flex;gap:12px;align-items:flex-start;padding:10px;background:var(--bg);border-radius:8px;">
+      <div style="font-size:10px;color:var(--muted);white-space:nowrap;padding-top:2px;min-width:130px">${new Date(a.created_at).toLocaleString()}</div>
+      <div>
+        <div style="font-size:12px;font-weight:600;color:var(--orange)">${a.activity_type}</div>
+        <div style="font-size:12px;color:var(--muted)">${esc(a.detail||'')}</div>
+      </div>
+    </div>`).join('');
+}
+function switchTab(tab) {
+  ['overview','email','activity'].forEach((t,i) => {
+    document.getElementById('tab-'+t).style.display = t===tab?'block':'none';
+    document.querySelectorAll('.tab')[i].classList.toggle('active', t===tab);
+  });
+}
+
+// ── Pipeline actions ──────────────────────────────────────────
+
+function setInlineProgress(id, percent, step) {
+  const box = document.getElementById(id);
+  if (!box) return;
+  box.style.fontStyle = 'normal';
+  box.style.color = 'var(--text)';
+  box.innerHTML = `
+    <div style="font-weight:600;margin-bottom:6px">${esc(step || 'Working...')} — ${percent}%</div>
+    <div style="height:8px;background:#e5e7eb;border-radius:999px;overflow:hidden">
+      <div style="height:100%;width:${percent}%;background:var(--orange);transition:width .4s"></div>
+    </div>`;
+}
+
+async function pollContactProgress(id, label='Working') {
+  for (let i=0; i<180; i++) {
+    const p = await api(`/contacts/${id}/progress`).catch(()=>null);
+    if (p) {
+      setInlineProgress('linkedin-info', p.percent || 0, p.step || label);
+      if (p.status === 'completed' || p.status === 'error') {
+        await openContactDetail(id);
+        await loadContacts();
+        await loadDashboard();
+        toast(p.status === 'completed' ? `${label} completed` : `${label} failed: ${p.step}`, p.status === 'completed' ? 'success' : 'error');
+        return p;
+      }
+    }
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+  toast(`${label} is still running. Refresh the contact after a minute.`, 'info');
+}
+
+async function runEnrich(id) {
+  setInlineProgress('linkedin-info', 5, 'Starting enrichment');
+  await api(`/contacts/${id}/enrich`, {method:'POST'});
+  toast('Enrichment started — live progress shown here', 'info');
+  await pollContactProgress(id, 'Enrichment + draft');
+}
+async function runDraft(id) {
+  setInlineProgress('linkedin-info', 10, 'Starting NVIDIA draft');
+  await api(`/contacts/${id}/draft`, {method:'POST'});
+  toast('NVIDIA is generating your email draft', 'info');
+  await pollContactProgress(id, 'Draft');
+}
+async function approveAndSend() {
+  if (!currentContact) return;
+  await api(`/contacts/${currentContact.id}`,{method:'PATCH',body:JSON.stringify({email_subject:document.getElementById('edit-subject').value,email_body:document.getElementById('edit-body').value})});
+  await api(`/contacts/${currentContact.id}/approve-and-send`,{method:'POST'});
+  toast('Email sent successfully!','success');
+  closeModal('contact-modal');
+  loadContacts();
+}
+async function quickApprove(id) {
+  await api(`/contacts/${id}/approve-and-send`,{method:'POST'});
+  toast('Sending email…','success');
+  setTimeout(()=>{loadDashboard();loadContacts();},1500);
+}
+async function runSinglePipeline(id) {
+  await api(`/contacts/${id}/enrich`,{method:'POST'});
+  toast('Pipeline started for this contact','info');
+}
+async function runBulkPipeline() {
+  const before = await api('/contacts/stats').catch(()=>({pending:0,enriched:0,error:0}));
+  const total = (before.pending||0) + (before.enriched||0) + (before.error||0);
+  if (!total) { toast('No pending/enriched/error contacts to process','info'); return; }
+  if (!confirm(`Run pipeline for ${total} contacts?`)) return;
+  const btn = document.getElementById('bulk-pipeline-btn');
+  const strip = document.getElementById('pipeline-progress');
+  const txt = document.getElementById('pipeline-progress-text');
+  const bar = document.getElementById('pipeline-progress-bar');
+  strip.classList.add('active');
+  btn.disabled = true;
+  btn.textContent = `0/${total} completed`;
+  await api('/contacts/bulk/pipeline',{method:'POST'});
+  for (let i=0;i<240;i++) {
+    await new Promise(r=>setTimeout(r,1500));
+    const st = await api('/contacts/stats').catch(()=>null);
+    if (!st) continue;
+    const remaining = (st.pending||0)+(st.enriching||0)+(st.enriched||0)+(st.drafting||0);
+    const done = Math.max(0, Math.min(total, total - remaining));
+    const pct = Math.round((done/total)*100);
+    btn.textContent = `${done}/${total} completed`;
+    txt.textContent = `${done}/${total} completed`;
+    bar.style.width = pct + '%';
+    loadDashboard(); loadContacts();
+    if (done >= total) break;
+  }
+  btn.disabled = false;
+  btn.textContent = 'Run Pipeline';
+  toast('Pipeline progress updated','success');
+}
+async function resetDrafting(id) {
+  await api(`/contacts/${id}/reset-drafting`, {method:'POST'});
+  toast('Contact reset. You can draft again now.','success');
+  await openContactDetail(id); await loadContacts(); await loadDashboard();
+}
+async function markReplied(id) {
+  await api(`/contacts/${id}/mark-replied`,{method:'POST'});
+  toast('Marked as replied — removed from sequence','success');
+  closeModal('contact-modal');
+  loadContacts(); loadDashboard();
+}
+
+async function updateContactCampaign(id) {
+  const val = document.getElementById('contact-campaign-select').value;
+  await api(`/contacts/${id}`, {method:'PATCH', body:JSON.stringify({campaign_id: val ? parseInt(val) : null})});
+  toast(val ? 'Contact added to campaign' : 'Contact removed from campaign', 'success');
+  await loadContacts();
+  await loadCampaigns();
+}
+
+async function deleteContact(id) {
+  if (!confirm('Delete this contact?')) return;
+  await api(`/contacts/${id}`,{method:'DELETE'});
+  toast('Contact deleted','info');
+  loadContacts();
+}
+
+async function saveManualEnrichment(generateDraft=false) {
+  if (!currentContact) return;
+  const payload = {
+    linkedin_headline: document.getElementById('manual-headline').value.trim(),
+    linkedin_summary: document.getElementById('manual-summary').value.trim(),
+    linkedin_experience: document.getElementById('manual-experience').value.trim(),
+    linkedin_skills: document.getElementById('manual-skills').value.trim(),
+    status: 'enriched'
+  };
+  await api(`/contacts/${currentContact.id}`, {method:'PATCH', body:JSON.stringify(payload)});
+  toast('AI context saved. Drafting will now use this context first.','success');
+  if (generateDraft) {
+    await runDraft(currentContact.id);
+  } else {
+    await openContactDetail(currentContact.id);
+    await loadContacts();
+    await loadDashboard();
+  }
+}
+
+function downloadContacts() {
+  const status = document.getElementById('status-filter')?.value || '';
+  const url = API + '/contacts/export.csv' + (status ? `?status=${encodeURIComponent(status)}` : '');
+  window.open(url, '_blank');
+}
+
+async function saveEmailDraft() {
+  if (!currentContact) return;
+  await api(`/contacts/${currentContact.id}`,{method:'PATCH',body:JSON.stringify({email_subject:document.getElementById('edit-subject').value,email_body:document.getElementById('edit-body').value})});
+  toast('Draft saved','success');
+}
+
+
+async function openContactModalNew() {
+  if (!campaigns.length) campaigns = await api('/campaigns/').catch(()=>[]);
+  ['new-name','new-email','new-company','new-job-title','new-linkedin'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('new-campaign').innerHTML = '<option value="">No campaign</option>' + campaigns.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  openModal('add-contact-modal');
+}
+async function saveNewContact() {
+  const payload = {
+    name: document.getElementById('new-name').value,
+    email: document.getElementById('new-email').value,
+    company: document.getElementById('new-company').value,
+    job_title: document.getElementById('new-job-title').value,
+    linkedin_url: document.getElementById('new-linkedin').value,
+    campaign_id: document.getElementById('new-campaign').value ? parseInt(document.getElementById('new-campaign').value) : null,
+    linkedin_summary: document.getElementById('new-manual-about').value.trim() || null
+  };
+  if (!payload.name || !payload.email) { toast('Name and email are required','error'); return; }
+  await api('/contacts/', {method:'POST', body:JSON.stringify(payload)});
+  toast('Contact added','success');
+  closeModal('add-contact-modal');
+  await loadContacts(); await loadDashboard();
+}
+
+// ── Upload ────────────────────────────────────────────────────
+let uploadFile = null;
+function openUploadModal() {
+  uploadFile=null;
+  document.getElementById('upload-btn').disabled=true;
+  document.getElementById('upload-preview').style.display='none';
+  document.getElementById('file-input').value='';
+  openModal('upload-modal');
+  api('/campaigns/').then(camps=>{
+    const sel=document.getElementById('upload-campaign-id');
+    sel.innerHTML='<option value="">No campaign</option>'+camps.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  }).catch(()=>{});
+}
+function handleFileSelect(e){ if(e.target.files[0]) setUploadFile(e.target.files[0]); }
+function handleDrop(e){ e.preventDefault(); document.getElementById('upload-zone').classList.remove('dragging'); if(e.dataTransfer.files[0]) setUploadFile(e.dataTransfer.files[0]); }
+function setUploadFile(file){
+  uploadFile=file;
+  document.getElementById('upload-btn').disabled=false;
+  const prev=document.getElementById('upload-preview');
+  prev.style.display='block';
+  prev.innerHTML=`<div style="background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:10px 14px;font-size:13px;color:var(--green);display:flex;align-items:center;gap:8px"><strong>${esc(file.name)}</strong> — ${(file.size/1024).toFixed(1)} KB ready to upload</div>`;
+}
+async function submitUpload() {
+  if (!uploadFile) return;
+  const fd=new FormData();
+  fd.append('file',uploadFile);
+  const campId=document.getElementById('upload-campaign-id').value;
+  if(campId) fd.append('campaign_id',campId);
+  try {
+    const r=await fetch(API+'/contacts/upload',{method:'POST',body:fd});
+    const data=await r.json();
+    if(!r.ok) throw new Error(data.detail||'Upload failed');
+    toast(`✅ Imported ${data.created} contacts (${data.skipped} skipped)`,'success');
+    closeModal('upload-modal');
+    loadDashboard(); loadContacts();
+  } catch(e){ toast('Upload error: '+e.message,'error'); }
+}
+
+// ── Campaigns ─────────────────────────────────────────────────
+async function loadCampaigns() {
+  campaigns=await api('/campaigns/').catch(()=>[]);
+  const grid=document.getElementById('campaigns-grid');
+  let html=campaigns.map(c=>`
+    <div class="campaign-card" onclick="editCampaign(${c.id})">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <div class="campaign-name">${esc(c.name)}</div>
+        <span class="badge badge-sent" style="flex-shrink:0">${c.contact_count||0} contacts</span>
+      </div>
+      <div class="campaign-meta">Follow-ups: day ${c.followup_days} · Max ${c.max_followups}</div>
+      <div class="campaign-vp">${esc((c.value_proposition||'').slice(0,90))}${(c.value_proposition||'').length>90?'...':''}</div>
+    </div>`).join('');
+  html += `<div class="campaign-card campaign-add" onclick="openCampaignModal()"><div style="font-size:28px">+</div><div>New Campaign</div></div>`;
+  if (!campaigns.length) grid.innerHTML=`<div class="empty-state"><div class="empty-icon">—</div><h3>No campaigns yet</h3><p>Create a campaign to organise your outreach</p><br><button class="btn btn-primary" onclick="openCampaignModal()">+ New Campaign</button></div>`+`<div class="campaign-card campaign-add" onclick="openCampaignModal()"><div style="font-size:28px">+</div><div>New Campaign</div></div>`;
+  else grid.innerHTML=html;
+}
+function openCampaignModal() {
+  document.getElementById('campaign-id-field').value='';
+  document.getElementById('campaign-modal-title').textContent='New Campaign';
+  ['camp-name','camp-your-name','camp-your-company','camp-your-role','camp-value-prop'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('camp-followup-days').value='3,7,14';
+  document.getElementById('camp-max-followups').value='3';
+  openModal('campaign-modal');
+}
+async function editCampaign(id) {
+  const c=await api(`/campaigns/${id}`).catch(()=>null);
+  if(!c) return;
+  document.getElementById('campaign-id-field').value=c.id;
+  document.getElementById('campaign-modal-title').textContent='✏️ Edit Campaign';
+  document.getElementById('camp-name').value=c.name||'';
+  document.getElementById('camp-your-name').value=c.your_name||'';
+  document.getElementById('camp-your-company').value=c.your_company||'';
+  document.getElementById('camp-your-role').value=c.your_role||'';
+  document.getElementById('camp-value-prop').value=c.value_proposition||'';
+  document.getElementById('camp-followup-days').value=c.followup_days||'3,7,14';
+  document.getElementById('camp-max-followups').value=c.max_followups||3;
+  openModal('campaign-modal');
+}
+async function saveCampaign() {
+  const id=document.getElementById('campaign-id-field').value;
+  const payload={
+    name:document.getElementById('camp-name').value,
+    your_name:document.getElementById('camp-your-name').value,
+    your_company:document.getElementById('camp-your-company').value,
+    your_role:document.getElementById('camp-your-role').value,
+    value_proposition:document.getElementById('camp-value-prop').value,
+    followup_days:document.getElementById('camp-followup-days').value,
+    max_followups:parseInt(document.getElementById('camp-max-followups').value)||3,
+  };
+  if(!payload.name){toast('Campaign name is required','error');return;}
+  if(id) await api(`/campaigns/${id}`,{method:'PATCH',body:JSON.stringify(payload)});
+  else   await api('/campaigns/',{method:'POST',body:JSON.stringify(payload)});
+  toast(id?'Campaign updated':'Campaign created!','success');
+  closeModal('campaign-modal');
+  loadCampaigns();
+}
+
+loadDashboard();
+</script>
+</body>
+</html>
